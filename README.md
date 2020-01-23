@@ -7,7 +7,7 @@ Easily run a load test on models deployed on Cloud AI Platform from GCE, GKE, or
 - Customizable: the container is based on Locust.io and the
 
 # Getting started
-The easiest way to get started is to use the Docker container available at TODO: add link
+The easiest way to get started is to use the Docker container available at [https://gcr.io/htappen-caip/load-test]
 0. Deploy a model to Cloud AI Platform. Create a JSON file with information about your model:
 ```
 {
@@ -21,7 +21,7 @@ The easiest way to get started is to use the Docker container available at TODO:
 Prediction request body details are available in the [Cloud AI Platform docs](https://cloud.google.com/ml-engine/docs/online-predict)
 
 1. Put the JSON file on Google Cloud Storage. Note the URI for it.
-2. Grab the image from gcr.io TODO: add link
+2. Grab the image from [https://gcr.io/htappen-caip/load-test]
 3. When you launch the image, make sure you set
   a. [Application default credentials](https://cloud.google.com/docs/authentication/production)
   b. An environment variable `CONFIG_URI` set to the GCS URI path from step 2

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "$id": "http://github.com/htappen/schemas/schema.json",
+  "$id": "https://raw.githubusercontent.com/htappen/cloud-ai-load-test/master/ml_models/schema.json",
   "projectId": {
     "type": "string"
     "pattern": "[a-z]([-a-z0-9]*[a-z0-9])"
@@ -16,7 +16,7 @@
   "testExamples": [
     { "$ref": "#/definitions/example"}
   ],
-  "required": ["projectId", "modelId"],
+  "required": ["projectId", "modelId", "testExamples"],
   "definitions": {
     "example": {
       "instances": []
