@@ -1,4 +1,4 @@
-from locust import HttpLocust, TaskSet, task, between
+from locust import HttpLocust, TaskSet, task, constant_pacing
 from locust.clients import HttpSession
 import google.auth
 from google.auth.transport.requests import Request as goog_request
@@ -16,7 +16,7 @@ API_SCOPES = [
     'https://www.googleapis.com/auth/cloud-platform',
     'https://www.googleapis.com/auth/cloud-platform.read-only'
 ]
-QPS_RANGE = [0.5, 2]
+QPS = 1
 GCS_HOST = 'https://storage.googleapis.com'
 MODEL_URI = 'https://ml.googleapis.com/v1/projects/{}/models/{}{}:predict'
 VERSION_ADDON = '/versions/{}'
@@ -53,6 +53,7 @@ class OAuth2Locust(HttpLocust):
 class CloudAITaskSet(TaskSet):
     @task
     def query_model(self):
+        self._set_target()
         self.client.post(
             self.model_uri,
             json=self.example
@@ -70,14 +71,23 @@ class CloudAITaskSet(TaskSet):
     def _get_test_example(self, model_cfg):
         return random.choice(model_cfg['testExamples'])
 
-    def setup(self):
-        model_cfg = self.locust.model_config
-        self.model_uri = self._get_model_uri(model_cfg)
-        self.example = self._get_test_example(model_cfg)
+    def _set_target(self):
+        if not (hasattr(self, "model_uri") and hasattr(self, "example")):
+            model_cfg = self.locust.model_config
+            self.model_uri = self._get_model_uri(model_cfg)
+            self.example = self._get_test_example(model_cfg)
 
 class CloudAIUser(OAuth2Locust):
     task_set = CloudAITaskSet
-    wait_time = between(*QPS_RANGE)
+    wait_time = constant_pacing(QPS)
+
+    def __init__(self, *args, **kwargs):
+        super(CloudAIUser, self).__init__(*args, **kwargs)
+        if GCS_CONFIG_PATH_KEY not in os.environ:
+            raise Exception("You must set '{}' env var to the GCS path to the config".format(GCS_CONFIG_PATH_KEY))
+        self.gcs_config = os.environ[GCS_CONFIG_PATH_KEY]
+        json_string = self._download_gcs_json(self.gcs_config)
+        self.model_config = json.loads(json_string)
 
     def _download_gcs_json(self, file_url):
         parsed_url = urlparse(file_url)
@@ -103,10 +113,3 @@ class CloudAIUser(OAuth2Locust):
         with open(path, 'r') as json_in:
             json_string = json_in.read()
         return json_string
-
-    def setup(self):
-        if GCS_CONFIG_PATH_KEY not in os.environ:
-            raise Exception("You must set '{}' env var to the GCS path to the config".format(GCS_CONFIG_PATH_KEY))
-        self.gcs_config = os.environ[GCS_CONFIG_PATH_KEY]
-        json_string = self._download_gcs_json(self.gcs_config)
-        self.model_config = json.loads(json_string)
